@@ -124,14 +124,14 @@ namespace Luftborn_CRUD.Controllers
             _context = context;
         }
 
-        // GET: api/Employee
+        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
         {
             return await _context.Employees.ToListAsync();
         }
 
-        // GET: api/Employee/5
+        
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(int id)
         {
@@ -145,7 +145,7 @@ namespace Luftborn_CRUD.Controllers
             return Employee;
         }
 
-        // PUT: api/Employee/5
+        
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmployee(int id, Employee Employee)
         {
@@ -174,7 +174,7 @@ namespace Luftborn_CRUD.Controllers
             return NoContent();
         }
 
-        // POST: api/Employee
+        
         [HttpPost]
         public async Task<ActionResult<Employee>> PostEmployee(Employee Employee)
         {
@@ -185,7 +185,7 @@ namespace Luftborn_CRUD.Controllers
             return CreatedAtAction("GetEmployee", new { id = Employee.id }, Employee);
         }
 
-        // DELETE: api/Employee/5
+        
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
@@ -201,7 +201,7 @@ namespace Luftborn_CRUD.Controllers
             return NoContent();
         }
 
-        private bool EmployeeExists(int id)
+        private bool EmployeeExists(int id)  //private because it's not an http method so cannot be mapped by controller
         {
             return _context.Employees.Any(e => e.id == id);
         }
