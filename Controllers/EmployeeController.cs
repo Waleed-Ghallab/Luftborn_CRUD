@@ -1,4 +1,112 @@
-﻿using Luftborn_CRUD.Models;
+﻿//using Luftborn_CRUD.Models;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Mvc;
+//using Microsoft.EntityFrameworkCore;
+
+//namespace Luftborn_CRUD.Controllers
+//{
+//    [Route("api/[controller]")]
+//    [ApiController]
+//    public class EmployeeController : ControllerBase
+//    {
+//        private readonly Luftborn_dbcontext _context;
+
+//        public EmployeeController(Luftborn_dbcontext context)
+//        {
+//            this._context = context;
+//        }
+
+//        [HttpGet]
+//        public IActionResult GetAllEmployees()
+//        {
+//            List<Employee> empList = _context.Employees.ToList();
+//            return Ok(empList);
+//        }
+
+//        [HttpGet("{id}")]
+//        public IActionResult GetEmployee(int id)
+//        {
+//            Employee emp = _context.Employees.FirstOrDefault(o => o.id == id);
+
+//            if (emp == null)
+//            {
+//                return BadRequest();
+//            }
+//            else
+//            {
+//                return Ok(emp);
+//            }
+
+//        }
+
+
+//        [HttpPost]
+//        public IActionResult PostEmployee(Employee Employee)
+//        {
+//            _context.Employees.Add(Employee);
+//            Employee.depto = Employee.deptID; //set non-foreign reference to dept to avoid including a reference
+//            _context.SaveChangesAsync();
+
+//            return Ok(Employee);
+//        }
+
+//        private bool EmployeeExists(int id)
+//        {
+//            return _context.Employees.Any(o => o.id == id);
+//        }
+
+//        // PUT: api/Employee/5
+//        [HttpPut("{id}")]
+//        public IActionResult PutEmployee(int id, Employee Employee)
+//        {
+//            if (id != Employee.id)
+//            {
+//                return BadRequest();
+//            }
+
+//            try
+//            {
+//                _context.Entry(Employee).State = EntityState.Modified;
+//                Employee.depto = Employee.deptID; //update depto
+//                _context.SaveChangesAsync();
+//            }
+//            catch (DbUpdateConcurrencyException) // to avoid concurrency violation
+//            {
+//                if (!EmployeeExists(id))
+//                {
+//                    return NotFound();
+//                }
+//                else
+//                {
+//                    throw;
+//                }
+//            }
+//            return Ok(Employee);
+//        }
+
+//        [HttpDelete("{id}")]
+//        public IActionResult DeleteEmployee(int id)
+//        {
+//            Employee Employee = _context.Employees.Find(id);
+//            if (Employee == null)
+//            {
+//                return NotFound();
+//            }
+
+//            _context.Employees.Remove(Employee);
+//            _context.SaveChangesAsync();
+
+//            return Ok();
+//        }
+//    }
+//}
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Luftborn_CRUD.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,70 +117,52 @@ namespace Luftborn_CRUD.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private readonly Luftborn_dbcontext _context;
+        public Luftborn_dbcontext _context;
 
         public EmployeeController(Luftborn_dbcontext context)
         {
-            this._context = context;
+            _context = context;
         }
 
+        // GET: api/Employee
         [HttpGet]
-        public IActionResult GetAllEmployees()
+        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
         {
-            List<Employee> empList = _context.Employees.ToList();
-            return Ok(empList);
+            return await _context.Employees.ToListAsync();
         }
 
+        // GET: api/Employee/5
         [HttpGet("{id}")]
-        public IActionResult GetEmployee(int id)
+        public async Task<ActionResult<Employee>> GetEmployee(int id)
         {
-            Employee emp = _context.Employees.FirstOrDefault(o => o.id == id);
+            var Employee = await _context.Employees.FindAsync(id);
 
-            if (emp == null)
+            if (Employee == null)
             {
-                return BadRequest();
-            }
-            else
-            {
-                return Ok(emp);
+                return NotFound();
             }
 
+            return Employee;
         }
 
-
-        [HttpPost]
-        public IActionResult Postemployee(Employee employee)
-        {
-            _context.Employees.Add(employee);
-            employee.depto = employee.deptID; //set non-foreign reference to dept to avoid including a reference
-            _context.SaveChangesAsync();
-
-            return Ok(employee);
-        }
-
-        private bool employeeExists(int id)
-        {
-            return _context.Employees.Any(o => o.id == id);
-        }
-
-        // PUT: api/employee/5
+        // PUT: api/Employee/5
         [HttpPut("{id}")]
-        public IActionResult Putemployee(int id, Employee employee)
+        public async Task<IActionResult> PutEmployee(int id, Employee Employee)
         {
-            if (id != employee.id)
+            if (id != Employee.id)
             {
                 return BadRequest();
             }
 
+            _context.Entry(Employee).State = EntityState.Modified;
+            Employee.depto = Employee.deptID; //update depto
             try
             {
-                _context.Entry(employee).State = EntityState.Modified;
-                employee.depto = employee.deptID; //update depto
-                _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException) // to avoid concurrency violation
+            catch (DbUpdateConcurrencyException)
             {
-                if (!employeeExists(id))
+                if (!EmployeeExists(id))
                 {
                     return NotFound();
                 }
@@ -81,22 +171,39 @@ namespace Luftborn_CRUD.Controllers
                     throw;
                 }
             }
-            return Ok(employee);
+            return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult Deleteemployee(int id)
+        // POST: api/Employee
+        [HttpPost]
+        public async Task<ActionResult<Employee>> PostEmployee(Employee Employee)
         {
-            Employee employee = _context.Employees.Find(id);
-            if (employee == null)
+            Employee.depto = Employee.deptID;//set non-foreign reference to dept
+            _context.Employees.Add(Employee);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetEmployee", new { id = Employee.id }, Employee);
+        }
+
+        // DELETE: api/Employee/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEmployee(int id)
+        {
+            var Employee = await _context.Employees.FindAsync(id);
+            if (Employee == null)
             {
                 return NotFound();
             }
 
-            _context.Employees.Remove(employee);
-            _context.SaveChangesAsync();
+            _context.Employees.Remove(Employee);
+            await _context.SaveChangesAsync();
 
-            return Ok();
+            return NoContent();
+        }
+
+        private bool EmployeeExists(int id)
+        {
+            return _context.Employees.Any(e => e.id == id);
         }
     }
 }
